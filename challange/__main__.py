@@ -5,7 +5,7 @@ from processor import SimpleMapReduce, worker
 def main():
     p = SimpleMapReduce(worker, None)
     results = {}
-    step = 10000
+    step = 300
     offset = 0
     for limit in range(step, 500000, step):  # for now
         p.data = data_chunk(offset, limit)
