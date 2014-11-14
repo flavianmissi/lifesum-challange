@@ -10,8 +10,8 @@ LIFESUM_API_FOODSTATS = "https://api.lifesum.com/v1/foodipedia/foodstats?offset=
 def data_chunk(offset, limit):
     """
     Gets a list of foodstats objects from lifesum API.
-    :param offset: start value for food id items.
-    :param limit: number of items to return in one request.
+    offset: start value for food id items.
+    limit: number of items to return in one request.
     Returns a list of json objects, e.g:
         [
             {
@@ -25,6 +25,8 @@ def data_chunk(offset, limit):
                 category_id: 36
             },  # ...
         ]
+
+    #TODO: make this parallel too
     """
     url = LIFESUM_API_FOODSTATS.format(offset, limit)
     response = requests.get(url)
