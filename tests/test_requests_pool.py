@@ -28,7 +28,7 @@ class ActiveRequestsPoolTest(unittest.TestCase):
     """
 
     def test_activate_should_respect_semaphore_limit(self):
-        sem = multiprocessing.Semaphore(5)
+        sem = multiprocessing.Semaphore(MAX_REQUESTS_PER_SEC)
         pool = ActiveRequestsPool()
 
         times = 13
