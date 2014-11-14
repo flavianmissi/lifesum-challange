@@ -11,15 +11,17 @@ class SimpleMapReduce(object):
     data = None
 
     def __init__(self, worker, reduce_fn):
-        self.namespace = Manager().Namespace()
+        self.manager = Manager()
+        self.namespace = self.manager.Namespace()
         self.namespace.mapping = None
         self.worker = worker
         self.reduce_fn = reduce_fn
+        self.results = None
 
     def map(self, data, keys):
         """
         Maps data to an {id: times} dictionary where times is the
-        occurrences of each key in `key` list.
+        occurrences of each key in `keys` list.
         Returns a list of the resulting dicts.
         """
         if not data:
@@ -37,20 +39,25 @@ class SimpleMapReduce(object):
 
         Example::
             mapping = "category_id"
-            by_most = 100
+            by_most = 5
             simple_map_reduce.reduce(mapping, by_most)
-            {432: 30, 876: 21}  # until the 100th
+            {432: 30, 876: 21}  # until the 5th
 
         Returns the filtered dict where the key is the key id (such as the category
         id) and the value is the number of times it was present on the data.
         """
         pass
 
+    def _get_results(self):
+        if not self.results:
+            self.results = self.manager.dict()
+        return self.results
+
 
 def worker(data, key, namespace):
     pool = Pool(processes=POOL_PROCESSES)
     args = itertools.izip(data, itertools.repeat(key))
-    mapping = pool.map(wrapper, args, chunksize=200)  # is this chunksize good?
+    mapping = pool.map(wrapper, args, chunksize=300)  # is this chunksize good?
     pool.terminate()
     pool.join()
     namespace.mapping = mapping

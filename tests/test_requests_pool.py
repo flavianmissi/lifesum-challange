@@ -20,7 +20,7 @@ def fake_worker(sem, pool):
 
 class ActiveRequestsPoolTest(unittest.TestCase):
     """
-    This is the best way I've found to test if this class does what it should.
+    This is the best way I've found to test if ActiveRequestsPool does what it should.
     Although I'm not sure if it's the ideal approach, the tests reflect actual behavior
     as long as the worker is constructed properly - by calling both `pool.activate` and
     `pool.inactivate`.
