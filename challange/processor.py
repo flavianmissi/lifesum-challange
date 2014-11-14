@@ -10,12 +10,11 @@ class SimpleMapReduce(object):
 
     data = None
 
-    def __init__(self, worker, reduce_fn):
+    def __init__(self, worker):
         self.manager = Manager()
         self.namespace = self.manager.Namespace()
         self.namespace.mapping = None
         self.worker = worker
-        self.reduce_fn = reduce_fn
         self.results = None
 
     def map(self, data, keys):
@@ -29,7 +28,10 @@ class SimpleMapReduce(object):
         p = Process(target=self.worker, args=(data, keys, self.namespace))
         p.start()
         p.join()
-        return Counter(self.namespace.mapping)
+        mapping = {}
+        for key in keys:
+            mapping[key] = Counter(self.namespace.mapping[key])
+        return mapping
 
     def reduce(self, mapping, by_most):
         """
@@ -48,36 +50,35 @@ class SimpleMapReduce(object):
         """
         pass
 
-    def _get_results(self):
-        if not self.results:
-            self.results = self.manager.dict()
-        return self.results
 
-
-def worker(data, key, namespace):
+def worker(data, keys, namespace):
     pool = Pool(processes=POOL_PROCESSES)
-    args = itertools.izip(data, itertools.repeat(key))
-    mapping = pool.map(wrapper, args, chunksize=300)  # is this chunksize good?
+    mapping = {}
+    for key in keys:
+        args = itertools.izip(data, itertools.repeat(key))
+        mapping[key] = pool.map(wrapper, args, chunksize=300)
     pool.terminate()
     pool.join()
     namespace.mapping = mapping
 
 
-def wrapper(obj_keys):
+def wrapper(obj_key):
     """
     An "alternative" way to pass more than one parameter into a map function
     """
-    return map_fn(*obj_keys)
+    return map_fn(*obj_key)
 
 
-def map_fn(obj, keys):
+def map_fn(obj, key):
     """
     Searches for `keys` in the dict `obj`.
     Returns the value for each key in `keys`.
 
-    #TODO: add +1 for each obj[key] found in a {key: count} shared dict
+    It's not possible to use a multiprocessing.manager.dict() in here,
+    I wanted to use nested dictionaries, but check out this "behavior": http://bugs.python.org/issue6766.
+    The nested dict usage would allow the map function to map more than one key per time,
+    while I don't find anyway better, I'm calling pool.map once for each key ><
     """
-    for key in keys:
-        if key in obj.keys() and key in keys:
-            return obj[key]
+    if key in obj.keys():
+        return obj[key]
     return
