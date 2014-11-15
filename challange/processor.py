@@ -10,11 +10,12 @@ class SimpleMapReduce(object):
 
     data = None
 
-    def __init__(self, worker):
-        self.manager = Manager()
-        self.namespace = self.manager.Namespace()
+    def __init__(self, map_worker, reduce_worker):
+        self.namespace = Manager().Namespace()
         self.namespace.mapping = None
-        self.worker = worker
+        self.namespace.reduced = None
+        self.map_worker = map_worker
+        self.reduce_worker = reduce_worker
         self.results = None
 
     def map(self, data, keys):
@@ -25,7 +26,7 @@ class SimpleMapReduce(object):
         """
         if not data:
             raise ValueError("You should first set SimpleMapReduce().data")
-        p = Process(target=self.worker, args=(data, keys, self.namespace))
+        p = Process(target=self.map_worker, args=(data, keys, self.namespace))
         p.start()
         p.join()
         mapping = {}
@@ -48,10 +49,14 @@ class SimpleMapReduce(object):
         Returns the filtered dict where the key is the key id (such as the category
         id) and the value is the number of times it was present on the data.
         """
-        pass
+        result = {}
+        p = Process(target=reduce_worker, args=(mapping, by_most, self.namespace))
+        p.start()
+        p.join()
+        return self.namespace.reduced
 
 
-def worker(data, keys, namespace):
+def map_worker(data, keys, namespace):
     pool = Pool(processes=POOL_PROCESSES)
     mapping = {}
     for key in keys:
@@ -82,3 +87,24 @@ def map_fn(obj, key):
     if key in obj.keys():
         return obj[key]
     return
+
+
+def reduce_worker(mapping, by_most, namespace):
+    p = Pool(processes=POOL_PROCESSES)
+    result = p.apply(reduce_fn, (mapping, by_most))
+    p.terminate()
+    p.join()
+    namespace.reduced = result
+
+
+def reduce_fn(objs, by_most):
+    values = objs.values()
+    values.sort()
+    values = values[-by_most:]
+
+    result = {}
+    for k, v in objs.items():
+        if v in values:
+            result[k] = v
+
+    return result
