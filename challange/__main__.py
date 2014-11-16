@@ -1,18 +1,22 @@
 from dataset import data_chunk
-from processor import SimpleMapReduce, worker
+from processor import SimpleMapReduce, map_worker
+import multiprocessing
+
 
 
 def main():
-    p = SimpleMapReduce(worker, None)
-    results = {}
+    p = SimpleMapReduce(map_worker, None, multiprocessing.Queue())
+    results = {"food_id": {}}
     step = 300
-    offset = 0
-    for limit in range(step, 500000, step):  # for now
-        p.data = data_chunk(offset, limit)
-        result = p.map(key="food_id")
+    for limit in range(step, 900, step):  # for now
+        data = data_chunk()
+        result = p.map(data, keys=["food_id"])
 
-        results = dict(results.items() + result.items())
-        offset = limit
+        for k, v in result.items():
+            if k in results["food_id"].keys():
+                results["food_id"][k] += v
+            else:
+                results["food_id"][k] = v
 
     print(results)
 
