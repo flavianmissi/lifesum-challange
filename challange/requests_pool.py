@@ -38,5 +38,6 @@ def worker(semaphore, req_pool, result_queue, offset, limit):
         result_queue.put(data)
         req_pool.inactivate(name)
 
+
 def make_requests(max_limit):
     pass

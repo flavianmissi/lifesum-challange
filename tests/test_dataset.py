@@ -9,17 +9,17 @@ class DataSetTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.json_mock = {
-                "meta": {
-                    "limit": 300,
-                    "code": 200,
-                    "next_offset": 4591,
-                    "offset": 0
-                },
-                "response":[
-                    {"food_id": 1,"id": 1,"category_id": 33},
-                    {"food_id": 3,"id": 3,"category_id": 36}
-                ]
-            }
+            "meta": {
+                "limit": 300,
+                "code": 200,
+                "next_offset": 4591,
+                "offset": 0
+            },
+            "response": [
+                {"food_id": 1, "id": 1, "category_id": 33},
+                {"food_id": 3, "id": 3, "category_id": 36}
+            ]
+        }
         cls.response_mock = Mock()
         cls.response_mock.json.return_value = cls.json_mock
 

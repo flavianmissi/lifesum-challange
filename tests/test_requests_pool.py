@@ -35,9 +35,9 @@ class ActiveRequestsPoolTest(unittest.TestCase):
         times = 13
         args = (self.sem, self.pool)
         jobs = [
-                   multiprocessing.Process(target=fake_worker, name="worker{}".format(i), args=args)
-                   for i in range(times)
-               ]
+            multiprocessing.Process(target=fake_worker, name="worker{}".format(i), args=args)
+            for i in range(times)
+        ]
         for job in jobs:
             job.start()
 
@@ -52,9 +52,9 @@ class ActiveRequestsPoolTest(unittest.TestCase):
         queue = multiprocessing.Queue()
         args = (self.sem, self.pool, queue, 0, 300)
         jobs = [
-                   multiprocessing.Process(target=worker, name="worker{}".format(i), args=args)
-                   for i in range(times)
-               ]
+            multiprocessing.Process(target=worker, name="worker{}".format(i), args=args)
+            for i in range(times)
+        ]
 
         for job in jobs:
             job.start()

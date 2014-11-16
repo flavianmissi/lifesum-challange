@@ -1,4 +1,3 @@
-import itertools
 from collections import Counter
 from multiprocessing import Pool, Manager, Process
 
@@ -17,7 +16,6 @@ class SimpleMapReduce(object):
         self.namespace.reduced = None
         self.map_worker = map_worker
         self.reduce_worker = reduce_worker
-        self.results = None
         self.reduced_bykey = {}
 
     def map(self, data, keys):
@@ -59,7 +57,6 @@ class SimpleMapReduce(object):
         Returns the filtered dict where the key is the key id (such as the category
         id) and the value is the number of times it was present on the data.
         """
-        result = {}
         p = Process(target=reduce_worker, args=(mapping, by_most, self.namespace))
         p.start()
         p.join()
@@ -90,7 +87,6 @@ class SimpleMapReduce(object):
         if not (key in self.reduced_bykey.keys()):
             self.reduced_bykey[key] = {}
 
-
         for k_id, v in new_reduced.items():
             if k_id in self.reduced_bykey[key]:
                 self.reduced_bykey[key][k_id] += v
@@ -102,8 +98,6 @@ class SimpleMapReduce(object):
 
 
 def map_worker(data, key, result):
-    mapping = {}
-    jobs = []
     p = Process(target=map_fn, args=(data, key, result))
     p.start()
     p.join()
@@ -126,7 +120,7 @@ def map_fn(data, key, result):
 
 def reduce_worker(mapping, by_most, namespace):
     p = Pool(processes=POOL_PROCESSES)
-    result = p.apply_async(reduce_fn, (mapping, by_most, namespace))
+    p.apply_async(reduce_fn, (mapping, by_most, namespace))
     p.close()
     p.join()
 

@@ -1,5 +1,5 @@
 from challange import requests_pool
-from challange.processor import SimpleMapReduce, map_worker, reduce_worker, map_fn
+from challange.processor import SimpleMapReduce, map_worker, reduce_worker
 from collections import Counter
 from tests.test_data import data, data1
 import multiprocessing
@@ -21,10 +21,10 @@ class SimpleMapReduceTest(unittest.TestCase):
         self.assertDictEqual(result, expected)
 
     def test_map_counts_entries_for_a_given_key_in_heterogeneous_dict(self):
-        data = [{"food_id": 1,"category_id": 3},
-                {"food_id": 1,"category_id": 3},
-                {"food_id": 2,"category_id": 3},
-                {"food_id": 7,"category_id": 3}]
+        data = [{"food_id": 1, "category_id": 3},
+                {"food_id": 1, "category_id": 3},
+                {"food_id": 2, "category_id": 3},
+                {"food_id": 7, "category_id": 3}]
 
         result = self.processor.map(data=data, keys=["food_id", "category_id"])
         expected = {"food_id": {1: 2, 2: 1, 7: 1}, "category_id": {3: 4}}
