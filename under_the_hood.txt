@@ -1,0 +1,16 @@
+I will not even try to explain in here why I've made each decision I made.  I hope
+I accomplished that in the comments I written through the code.
+
+The purpose of this text is to tell you about my experience with parallel programming,
+which was almost none until Lifesum contacted and proposed this challange. I have to
+say it's been *really* fun to be working on the challange. When I coded for
+Tsuru I written some parallel tasks in Go with goroutines, but they were all very
+simple and with Go they became even simpler.
+
+Since this challange was proposed by a company, I tried to accomplish it as fastest as I could,
+given the time I had to work on it (which is little).
+
+The point is, I never did any parallalelism in python, and never had to process this amount of
+data too, so I'm basically a newbie with everything I did.
+
+Anyways, hope my code isn't that bad. Any feedbacks would be more than appreciated.
