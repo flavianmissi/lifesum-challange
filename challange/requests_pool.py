@@ -3,9 +3,15 @@ from dataset import data_chunk
 
 
 MAX_REQUESTS_PER_SEC = 5
+MAX_PER_REQUEST = 300  # from problem description
 
 
 class ActiveRequestsPool(object):
+    """
+    #TODO: Should control not only by active, but active per some time
+    range.
+    This means this class should handle the inactivation of processes on its own.
+    """
 
     def __init__(self):
         self.manager = multiprocessing.Manager()
@@ -37,7 +43,3 @@ def worker(semaphore, req_pool, result_queue, offset, limit):
         data = data_chunk(offset, limit)
         result_queue.put(data)
         req_pool.inactivate(name)
-
-
-def make_requests(max_limit):
-    pass

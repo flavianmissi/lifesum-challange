@@ -1,8 +1,7 @@
 import unittest
 import multiprocessing
-from challange.requests_pool import ActiveRequestsPool, MAX_REQUESTS_PER_SEC, worker, make_requests
+from challange.requests_pool import ActiveRequestsPool, MAX_REQUESTS_PER_SEC, worker
 import time
-from mock import patch
 
 
 namespace = multiprocessing.Manager().Namespace()
@@ -14,8 +13,8 @@ def fake_worker(sem, pool):
     with sem:
         pool.activate(name)
         # should actually be doing some work
-        time.sleep(1)
         namespace.worker_called_times += 1
+        time.sleep(0.5)
         pool.inactivate(name)
 
 
@@ -27,9 +26,11 @@ class ActiveRequestsPoolTest(unittest.TestCase):
     `pool.inactivate`.
     Inputs on the subject will be really appreciated :)
     """
-    def setUp(self):
-        self.pool = ActiveRequestsPool()
-        self.sem = multiprocessing.Semaphore(MAX_REQUESTS_PER_SEC)
+    @classmethod
+    def setUpClass(cls):
+        cls.pool = ActiveRequestsPool()
+        cls.sem = multiprocessing.Semaphore(MAX_REQUESTS_PER_SEC)
+        cls.queue = multiprocessing.Queue()
 
     def test_activate_should_respect_semaphore_limit(self):
         times = 13
@@ -49,8 +50,7 @@ class ActiveRequestsPoolTest(unittest.TestCase):
 
     def test_worker_should_feed_queue(self):
         times = 2
-        queue = multiprocessing.Queue()
-        args = (self.sem, self.pool, queue, 0, 300)
+        args = (self.sem, self.pool, self.queue, 0, 300)
         jobs = [
             multiprocessing.Process(target=worker, name="worker{}".format(i), args=args)
             for i in range(times)
@@ -61,12 +61,8 @@ class ActiveRequestsPoolTest(unittest.TestCase):
 
         for job in jobs:
             job.join()
-            resultn = queue.get()
+            resultn = self.queue.get()
             self.assertEqual(len(resultn), 300)
             self.assertIn("category_id", resultn[0].keys())
             self.assertIn("id", resultn[0].keys())
             self.assertIn("food_id", resultn[0].keys())
-
-    @patch("challange.requests_pool.data_chunk")
-    def test_make_requests_should_start_worker_and_feed_queue(self, data_chunk_mock):
-        jobs = make_requests(max_limit=30000)
