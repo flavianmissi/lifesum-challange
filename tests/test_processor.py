@@ -1,5 +1,6 @@
 from challange import requests_pool
 from challange.processor import SimpleMapReduce, map_worker, reduce_worker
+from challange.semaphore import TimedSemaphore
 from collections import Counter
 from tests.test_data import data, data1
 import multiprocessing
@@ -68,7 +69,7 @@ class SimpleMapReduceRequestPoolTest(unittest.TestCase):
         self.queue = multiprocessing.Queue()
         self.mapreduce = SimpleMapReduce(map_worker, reduce_worker)
         self.pool = requests_pool.ActiveRequestsPool()
-        self.sem = multiprocessing.Semaphore(requests_pool.MAX_REQUESTS_PER_SEC)
+        self.sem = TimedSemaphore(requests_pool.MAX_REQUESTS_PER_SEC)
 
     def test_process_should_return_map_reduced_keys_result(self):
         times = 3
