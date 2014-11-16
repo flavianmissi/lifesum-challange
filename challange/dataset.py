@@ -25,8 +25,6 @@ def data_chunk(offset, limit):
                 category_id: 36
             },  # ...
         ]
-
-    #TODO: make this parallel too
     """
     url = LIFESUM_API_FOODSTATS.format(offset, limit)
     response = requests.get(url)
