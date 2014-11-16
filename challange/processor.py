@@ -2,7 +2,8 @@ from collections import Counter
 from multiprocessing import Pool, Manager, Process
 
 
-POOL_PROCESSES = 5  # is 5 good enough?
+POOL_PROCESSES = 3
+DEFAULT_WAIT_TIMEOUT = 5
 
 
 class SimpleMapReduce(object):
@@ -35,7 +36,8 @@ class SimpleMapReduce(object):
             jobs.append(job)
 
         for job in jobs:
-            job.join()
+            job.join(DEFAULT_WAIT_TIMEOUT)
+            job.terminate()
 
         for key in keys:
             mapping[key] = Counter(mapping[key])
@@ -59,7 +61,9 @@ class SimpleMapReduce(object):
         """
         p = Process(target=reduce_worker, args=(mapping, by_most, self.namespace))
         p.start()
-        p.join()
+        p.join(DEFAULT_WAIT_TIMEOUT)
+        p.terminate()
+
         return self.namespace.reduced
 
     def process(self, keys_by_most, queue):
@@ -100,7 +104,8 @@ class SimpleMapReduce(object):
 def map_worker(data, key, result):
     p = Process(target=map_fn, args=(data, key, result))
     p.start()
-    p.join()
+    p.join(DEFAULT_WAIT_TIMEOUT)
+    p.terminate()
 
 
 def map_fn(data, key, result):
@@ -123,6 +128,7 @@ def reduce_worker(mapping, by_most, namespace):
     p.apply_async(reduce_fn, (mapping, by_most, namespace))
     p.close()
     p.join()
+    p.terminate()
 
 
 def reduce_fn(objs, by_most, namespace):
