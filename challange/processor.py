@@ -11,12 +11,14 @@ class SimpleMapReduce(object):
     data = None
 
     def __init__(self, map_worker, reduce_worker):
-        self.namespace = Manager().Namespace()
+        self.manager = Manager()
+        self.namespace = self.manager.Namespace()
         self.namespace.mapping = None
         self.namespace.reduced = None
         self.map_worker = map_worker
         self.reduce_worker = reduce_worker
         self.results = None
+        self.reduced_bykey = {}
 
     def map(self, data, keys):
         """
@@ -24,14 +26,22 @@ class SimpleMapReduce(object):
         occurrences of each key in `keys` list.
         Returns a list of the resulting dicts.
         """
-        if not data:
-            raise ValueError("You should first set SimpleMapReduce().data")
-        p = Process(target=self.map_worker, args=(data, keys, self.namespace))
-        p.start()
-        p.join()
+        jobs = []
         mapping = {}
         for key in keys:
-            mapping[key] = Counter(self.namespace.mapping[key])
+            result = self.manager.list()
+            mapping[key] = result
+            # try to use Pool().map later and measure performance
+            job = Process(target=self.map_worker, args=(data, key, result))
+            job.start()
+            jobs.append(job)
+
+        for job in jobs:
+            job.join()
+
+        for key in keys:
+            mapping[key] = Counter(mapping[key])
+
         return mapping
 
     def reduce(self, mapping, by_most):
@@ -55,56 +65,80 @@ class SimpleMapReduce(object):
         p.join()
         return self.namespace.reduced
 
+    def process(self, keys_by_most, queue):
+        """
+        Calls self.map passing queue.get() and then reduce the results.
 
-def map_worker(data, keys, namespace):
-    pool = Pool(processes=POOL_PROCESSES)
+        keys_by_most: list of tuples with each key and it's repetition value, e.g.:
+        self.process([("food_id", 5), ("category_id", 10)])
+        """
+        keys = []
+        for key, _ in keys_by_most:
+            keys.append(key)
+
+        mapping = self.map(queue.get(), keys)
+
+        for key, by_most in keys_by_most:
+            self.merge_reduced(self.reduce(mapping[key], by_most), key, by_most)
+
+        return self.reduced_bykey
+
+    def merge_reduced(self, new_reduced, key, by_most):
+        """
+        Merges a `new_reduced` dict with a previously reduced dict
+        """
+        if not (key in self.reduced_bykey.keys()):
+            self.reduced_bykey[key] = {}
+
+
+        for k_id, v in new_reduced.items():
+            if k_id in self.reduced_bykey[key]:
+                self.reduced_bykey[key][k_id] += v
+            else:
+                self.reduced_bykey[key][k_id] = v
+
+        self.reduced_bykey[key] = self.reduce(self.reduced_bykey[key], by_most)
+        return self.reduced_bykey
+
+
+def map_worker(data, key, result):
     mapping = {}
-    for key in keys:
-        args = itertools.izip(data, itertools.repeat(key))
-        mapping[key] = pool.map(wrapper, args, chunksize=300)
-    pool.terminate()
-    pool.join()
-    namespace.mapping = mapping
+    jobs = []
+    p = Process(target=map_fn, args=(data, key, result))
+    p.start()
+    p.join()
 
 
-def wrapper(obj_key):
+def map_fn(data, key, result):
     """
-    An "alternative" way to pass more than one parameter into a map function
-    """
-    return map_fn(*obj_key)
-
-
-def map_fn(obj, key):
-    """
-    Searches for `keys` in the dict `obj`.
-    Returns the value for each key in `keys`.
+    Searches for `key` in the dict `obj`.
+    Returns the value for `key`.
 
     It's not possible to use a multiprocessing.manager.dict() in here,
     I wanted to use nested dictionaries, but check out this "behavior": http://bugs.python.org/issue6766.
     The nested dict usage would allow the map function to map more than one key per time,
     while I don't find anyway better, I'm calling pool.map once for each key ><
     """
-    if key in obj.keys():
-        return obj[key]
-    return
+    for obj in data:
+        if key in obj.keys():
+            result.append(obj[key])
 
 
 def reduce_worker(mapping, by_most, namespace):
     p = Pool(processes=POOL_PROCESSES)
-    result = p.apply(reduce_fn, (mapping, by_most))
-    p.terminate()
+    result = p.apply_async(reduce_fn, (mapping, by_most, namespace))
+    p.close()
     p.join()
-    namespace.reduced = result
 
 
-def reduce_fn(objs, by_most):
+def reduce_fn(objs, by_most, namespace):
     values = objs.values()
     values.sort()
-    values = values[-by_most:]
+    biggest_values = values[-by_most:]
 
     result = {}
     for k, v in objs.items():
-        if v in values:
+        if v in biggest_values:
             result[k] = v
 
-    return result
+    namespace.reduced = result
