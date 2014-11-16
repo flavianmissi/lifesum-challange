@@ -19,4 +19,26 @@ To run it:
 The output is kind of noisy, I'm working on improve that soon.
 
 
-[1] custom timed semaphore not implemented yet.
+Performance
+-----------
+
+Number of objects to retrieve: 5000
+
+    $ time make run
+    [...] # omitted output
+    real    0m40.967s
+    user    0m2.530s
+    sys     0m1.756s
+
+Number of objects to retrieve: 50000
+
+    $ time make run
+    [...] # omitted output
+    real    2m24.529s
+    user    0m42.537s
+    sys     0m36.840s
+
+
+Number of objects to retrieve: 5000000
+    $ time make run
+    [...] # omitted output
