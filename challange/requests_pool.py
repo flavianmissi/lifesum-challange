@@ -1,4 +1,5 @@
 import multiprocessing
+from dataset import data_chunk
 
 
 MAX_REQUESTS_PER_SEC = 5
@@ -26,8 +27,16 @@ class ActiveRequestsPool(object):
             self.active.remove(process_name)
 
 
-def worker(semaphore, req_pool):
+def worker(semaphore, req_pool, result_queue, offset, limit):
     """
     Make a request respecting the `semaphore` value.
     """
+    name = multiprocessing.current_process().name
+    with semaphore:
+        req_pool.activate(name)
+        data = data_chunk(offset, limit)
+        result_queue.put(data)
+        req_pool.inactivate(name)
+
+def make_requests(max_limit):
     pass
