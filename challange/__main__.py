@@ -51,7 +51,7 @@ def main():
     queue = multiprocessing.Queue()
     # queue operations may block the program if underlying pipe is full
     # see http://bugs.python.org/issue8237
-    # we SHOULD get small chunks of data so the queue is never full
+    # we could get small chunks of data so the queue is never full
     # why the API isn't coherent when I try to get a smaller chunk?
     # as an exaple, with offset = 0 and limit = 150 search for the following item:
     # food_id: 95302,
