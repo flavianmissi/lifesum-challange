@@ -1,9 +1,10 @@
 import unittest
 import multiprocessing
-from challange.requests_pool import ActiveRequestsPool, MAX_REQUESTS_PER_SEC, worker
+from challange.requests_pool import ActiveRequestsPool, worker
 import time
 
 
+MAX_REQUESTS_PER_SEC = 5
 namespace = multiprocessing.Manager().Namespace()
 namespace.worker_called_times = 0
 
