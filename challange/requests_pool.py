@@ -2,10 +2,6 @@ import multiprocessing
 from dataset import data_chunk
 
 
-MAX_REQUESTS_PER_SEC = 5
-MAX_PER_REQUEST = 300  # from problem description
-
-
 class ActiveRequestsPool(object):
     """
     #TODO: Should control not only by active, but active per some time
@@ -41,5 +37,5 @@ def worker(semaphore, req_pool, result_queue, offset, limit):
     with semaphore:
         req_pool.activate(name)
         data = data_chunk(offset, limit)
-        result_queue.put(data)
+        result_queue.put(data, 10)
         req_pool.inactivate(name)
