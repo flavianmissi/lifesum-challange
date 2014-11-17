@@ -7,6 +7,9 @@ import multiprocessing
 import unittest
 
 
+MAX_REQS_PER_SECOND = 5
+
+
 class SimpleMapReduceTest(unittest.TestCase):
 
     def setUp(self):
@@ -69,7 +72,7 @@ class SimpleMapReduceRequestPoolTest(unittest.TestCase):
         self.queue = multiprocessing.Queue()
         self.mapreduce = SimpleMapReduce(map_worker, reduce_worker)
         self.pool = requests_pool.ActiveRequestsPool()
-        self.sem = TimedSemaphore(requests_pool.MAX_REQUESTS_PER_SEC)
+        self.sem = TimedSemaphore(MAX_REQS_PER_SECOND)
 
     def test_process_should_return_map_reduced_keys_result(self):
         times = 3
