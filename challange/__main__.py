@@ -13,12 +13,24 @@ SEMAPHORE = multiprocessing.Semaphore(hard_limit)
 MAX_REQS_PER_SECOND = 5
 
 
+def remove_repetitions(data):
+    values = set(data.values())
+    new_data = {}
+    for value in values:
+        for k, v in data.items():
+            if v == value and v not in new_data.values():
+                new_data[k] = v
+
+    return new_data
+
+
 def show_data(data):
     # TODO: use set (for values) when printing food_ids,
     # the algorithm adds repeated values even though the end result
     # is higher than the requested (100 in this case)
     food_table = [["food_id", "occurrences"]]
-    for k, v in data["food_id"].items():
+    food_id_data = remove_repetitions(data["food_id"])
+    for k, v in food_id_data.items():
         food_table.append([str(k), str(v)])
     table = AsciiTable(food_table)
     print table.table
@@ -100,7 +112,7 @@ def main():
     try:
         show_data(reduced)
     except Exception:
-        print("Oops! No data to show, try again and wait some more time please.")
+        print("--> Oops! No data to show, try again and wait some more time please.")
 
 
 try:
