@@ -22,23 +22,11 @@ The output is kind of noisy, I'm working on improve that soon.
 Performance
 -----------
 
-Number of objects to retrieve: 5000
+The algorithm bottleneck is the network, it takes about 2ms to 5ms to map and reduce 300 entries from
+the JSON, but as we're not allowed to do more than 5 reqs/sec to the API, the resource consumption
+becomes the bottleneck. Also, from Brazil the time to perform a request on the API is 1s to 2s, it rarely
+takes less than one second to perform the request, so the algorithm feels really slow because of the
+network :(
 
-    $ time make run
-    [...] # omitted output
-    real    0m40.967s
-    user    0m2.530s
-    sys     0m1.756s
-
-Number of objects to retrieve: 50000
-
-    $ time make run
-    [...] # omitted output
-    real    2m24.529s
-    user    0m42.537s
-    sys     0m36.840s
-
-
-Number of objects to retrieve: 5000000
-    $ time make run
-    [...] # omitted output
+If each request takes one second to complete, it would take us about 20 days to process all the data.
+If is possible to process 5 reqs/sec, the algorithm would take about 4 days to complete.
