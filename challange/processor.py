@@ -20,12 +20,12 @@ class SimpleMapReduce(object):
         self.reduced_bykey = {}
 
     def _remove_repeated(self, data):
-        new_data = {}
-        for k, v in data.items():
-            if v not in new_data.values():
-                new_data[k] = v
+        # new_data = {}
+        # for k, v in data.items():
+        #     if v not in new_data.values():
+        #         new_data[k] = v
 
-        return new_data
+        return data
 
     def map(self, data, keys):
         """
@@ -139,9 +139,11 @@ def map_fn(data, key, result):
     The nested dict usage would allow the map function to map more than one key per time,
     while I don't find any better, I'm calling pool.map once for each key
     """
+    entries_id = []
     for obj in data:
-        if key in obj.keys():
+        if key in obj.keys() and obj["id"] not in entries_id:
             result.append(obj[key])
+            entries_id.append(obj["id"])
 
 
 def reduce_worker(mapping, by_most, namespace):
