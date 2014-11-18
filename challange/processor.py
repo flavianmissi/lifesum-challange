@@ -19,6 +19,14 @@ class SimpleMapReduce(object):
         self.reduce_worker = reduce_worker
         self.reduced_bykey = {}
 
+    def _remove_repeated(self, data):
+        new_data = {}
+        for k, v in data.items():
+            if v not in new_data.values():
+                new_data[k] = v
+
+        return new_data
+
     def map(self, data, keys):
         """
         Maps data to an {id: times} dictionary where times is the
@@ -41,7 +49,9 @@ class SimpleMapReduce(object):
             job.terminate()
 
         for key in keys:
+            mapping[key]
             mapping[key] = Counter(mapping[key])
+            mapping[key] = self._remove_repeated(mapping[key])
 
         return mapping
 
@@ -127,7 +137,7 @@ def map_fn(data, key, result):
     It's not possible to use a multiprocessing.manager.dict() in here to handle results,
     I wanted to use nested dictionaries, but check out this "behavior": http://bugs.python.org/issue6766.
     The nested dict usage would allow the map function to map more than one key per time,
-    while I don't find any better, I'm calling pool.map once for each key ><
+    while I don't find any better, I'm calling pool.map once for each key
     """
     for obj in data:
         if key in obj.keys():

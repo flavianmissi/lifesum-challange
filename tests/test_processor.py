@@ -20,7 +20,7 @@ class SimpleMapReduceTest(unittest.TestCase):
         data = [{"food_id": 1}, {"food_id": 1}, {"food_id": 3}, {"food_id": 7}]
 
         result = self.processor.map(data=data, keys=["food_id"])
-        expected = {"food_id": {1: 2, 3: 1, 7: 1}}
+        expected = {"food_id": {1: 2, 3: 1}}
 
         self.assertDictEqual(result, expected)
 
@@ -31,7 +31,7 @@ class SimpleMapReduceTest(unittest.TestCase):
                 {"food_id": 7, "category_id": 3}]
 
         result = self.processor.map(data=data, keys=["food_id", "category_id"])
-        expected = {"food_id": {1: 2, 2: 1, 7: 1}, "category_id": {3: 4}}
+        expected = {"food_id": {1: 2, 2: 1}, "category_id": {3: 4}}
 
         self.assertDictEqual(result, expected)
 
@@ -40,7 +40,7 @@ class SimpleMapReduceTest(unittest.TestCase):
 
         result = self.processor.map(data=self.queue.get(), keys=["food_id"])
         result = self.processor.reduce(result["food_id"], by_most=5)
-        expected = {100594: 27, 100584: 25, 100509: 16, 100515: 15, 100508: 12, 100510: 12}
+        expected = {100594: 27, 100584: 25, 100509: 16, 100515: 15, 100508: 12}
 
         self.assertDictEqual(result, expected)
 
@@ -48,13 +48,13 @@ class SimpleMapReduceTest(unittest.TestCase):
         # first queue result
         self.queue.put(data)
         result = self.processor.process([("food_id", 5)], self.queue)
-        expected = {100594: 27, 100584: 25, 100509: 16, 100515: 15, 100508: 12, 100510: 12}
+        expected = {100594: 27, 100584: 25, 100509: 16, 100515: 15, 100508: 12}
         self.assertDictEqual(result["food_id"], expected)
 
         # second queue result
         self.queue.put(data1)
         result = self.processor.process([("food_id", 5)], self.queue)
-        expected = {100594: 54, 100584: 51, 100509: 32, 100515: 30, 100508: 25, 100510: 25}
+        expected = {100594: 54, 100584: 51, 100509: 32, 100515: 30, 100508: 25}
         self.assertDictEqual(result["food_id"], expected)
 
     def test_reduce_filters_using_by_most(self):
@@ -94,5 +94,5 @@ class SimpleMapReduceRequestPoolTest(unittest.TestCase):
         for t in range(times):
             reduced = self.mapreduce.process([("food_id", 5), ("category_id", 10)], self.queue)
 
-        expected_food = {100594: 81, 100584: 77, 100509: 48, 100515: 45, 100508: 38, 100510: 38}
+        expected_food = {100594: 81, 100584: 77, 100509: 48, 100515: 45, 100508: 38}
         self.assertDictEqual(reduced["food_id"], expected_food)
