@@ -7,19 +7,27 @@ import resource
 import time
 
 
-_, hard_limit = resource.getrlimit(resource.RLIMIT_NPROC)
-SEMAPHORE = multiprocessing.Semaphore(hard_limit)
+soft_limit, _ = resource.getrlimit(resource.RLIMIT_NPROC)
+SEMAPHORE = multiprocessing.Semaphore(soft_limit)
 
 MAX_REQS_PER_SECOND = 5
+ENTRIES_PER_PAGE = 300
 
 
 def show_data(data):
-    # TODO: use set (for values) when printing food_ids,
-    # the algorithm adds repeated values even though the end result
-    # is higher than the requested (100 in this case)
     food_table = [["food_id", "occurrences"]]
-    for k, v in data["food_id"].items():
-        food_table.append([str(k), str(v)])
+    values = data["food_id"].values()
+    values.sort()
+    values.reverse()
+    i = 0
+    for v1 in values:
+        for k, v in data["food_id"].items():
+            if v == v1:
+                food_table.append([str(k), str(v)])
+                i += 1
+        if i >= 100:
+            break
+
     table = AsciiTable(food_table)
     print table.table
 
@@ -30,14 +38,12 @@ def show_data(data):
     print table.table
 
 
-def request_workers(queue, jobs):
-    # TODO: add total items processed
+def request_workers(queue, jobs, total_resources):
     semaphore = TimedSemaphore(MAX_REQS_PER_SECOND, time=0.2)  # 0.2 * 5 = 1s
     request_pool = ActiveRequestsPool()
-    total_resources = 5000
     offset = 0
-    limit = 300
-    step = 300
+    limit = ENTRIES_PER_PAGE
+    step = ENTRIES_PER_PAGE
     args = (semaphore, request_pool, queue, offset, limit)
     with SEMAPHORE:
         while limit <= total_resources:
@@ -52,17 +58,6 @@ def main():
     queue = multiprocessing.Queue()
     # queue operations may block the program if underlying pipe is full
     # see http://bugs.python.org/issue8237
-    # we could get small chunks of data so the queue is never full
-    # why the API isn't coherent when I try to get a smaller chunk?
-    # as an exaple, with offset = 0 and limit = 150 search for the following item:
-    # food_id: 95302,
-    # id: 3485,
-    # category_id: 135
-    # you'll find it once, now change the offset to 151 and the limit to 300,
-    # search for the same pattern again, you'll also find it once.
-    # so we've seen the pattern twice so far, right?
-    # now change offset = 0 and limit = 300, search for the pattern again,
-    # you'll find it only once. what's that?
     jobs = []
 
     most_food = 100
@@ -70,28 +65,34 @@ def main():
     mapreduce = SimpleMapReduce(map_worker, reduce_worker)
     keys_bymost = [("food_id", most_food), ("category_id", most_cat)]
     reduced = None
+    processed_entries = 0
+    times = 1000000
+    total_resources = 500000000 / times
 
     try:
         with SEMAPHORE:
-            print("starting request workers")
-            request_workers(queue, jobs)
-            print("done starting request workers")
+            for t in range(times):
+                print("--> starting request workers")
+                request_workers(queue, jobs, total_resources)
+                print("> done starting request workers")
 
-            print("processing everything on the queue")
-            while not queue.empty():
-                reduced = mapreduce.processing(keys_bymost, queue)
-            print("done processing queue")
+                print("--> processing everything on the queue")
+                while not queue.empty():
+                    reduced = mapreduce.processing(keys_bymost, queue)
+                    processed_entries += ENTRIES_PER_PAGE
+                print("> done processing queue")
 
-            print("starting to process delayed jobs")
-            for job in jobs:
-                if job.is_alive():
-                    job.join(DEFAULT_WAIT_TIMEOUT)
-                    if not queue.empty():
-                        reduced = mapreduce.process(keys_bymost, queue)
-                    else:
-                        print("-->>request failed to fill up queue! terminating anyway!")
-                    job.terminate()
-                    print("done, going to next job")
+                print("--> starting to process delayed jobs")
+                for job in jobs:
+                    if job.is_alive():
+                        job.join(DEFAULT_WAIT_TIMEOUT)
+                        if not queue.empty():
+                            reduced = mapreduce.process(keys_bymost, queue)
+                            processed_entries += ENTRIES_PER_PAGE
+                        else:
+                            print("-->>request failed to fill up queue! terminating anyway!")
+                        job.terminate()
+                        print("> done, going to next job")
     except KeyboardInterrupt:
         print("-> killing jobs, hang on!")
         for job in jobs:
@@ -100,6 +101,7 @@ def main():
 
     try:
         show_data(reduced)
+        print("-> Total entries processed is ~{}".format(processed_entries))
     except Exception:
         print("--> Oops! No data to show, try again and wait some more time please.")
 
