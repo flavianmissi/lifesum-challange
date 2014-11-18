@@ -19,14 +19,6 @@ class SimpleMapReduce(object):
         self.reduce_worker = reduce_worker
         self.reduced_bykey = {}
 
-    def _remove_repeated(self, data):
-        # new_data = {}
-        # for k, v in data.items():
-        #     if v not in new_data.values():
-        #         new_data[k] = v
-
-        return data
-
     def map(self, data, keys):
         """
         Maps data to an {id: times} dictionary where times is the
@@ -38,8 +30,6 @@ class SimpleMapReduce(object):
         for key in keys:
             result = self.manager.list()
             mapping[key] = result
-            # wish I could use multiprocessing.Pool, but it doesn't repasses KeyboardInterrupt
-            # up into the stack, making it impossible to treat it properly
             job = Process(target=self.map_worker, args=(data, key, result))
             job.start()
             jobs.append(job)
@@ -51,7 +41,6 @@ class SimpleMapReduce(object):
         for key in keys:
             mapping[key]
             mapping[key] = Counter(mapping[key])
-            mapping[key] = self._remove_repeated(mapping[key])
 
         return mapping
 
