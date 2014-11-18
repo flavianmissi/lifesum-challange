@@ -16,7 +16,7 @@ To run it:
 
     $ make run
 
-The output is kind of noisy, I'm working on improve that soon.
+CTRL+C to finish it and see the results.
 
 
 Performance
