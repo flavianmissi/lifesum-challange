@@ -1,7 +1,7 @@
 import unittest
 from mock import patch, Mock
 
-from challange import dataset
+from challenge import dataset
 
 
 class DataSetTest(unittest.TestCase):
@@ -23,14 +23,14 @@ class DataSetTest(unittest.TestCase):
         cls.response_mock = Mock()
         cls.response_mock.json.return_value = cls.json_mock
 
-    @patch("challange.dataset.requests")
+    @patch("challenge.dataset.requests")
     def test_data_chunk_calls_requests_with_given_offset_and_limit(self, requests_mock):
         requests_mock.get.return_value = self.response_mock
 
         dataset.data_chunk(0, 300)  # ignore return
         requests_mock.get.assert_called_with(dataset.LIFESUM_API_FOODSTATS.format(0, 300))
 
-    @patch("challange.dataset.requests")
+    @patch("challenge.dataset.requests")
     def test_data_chunk_returns_only_json_relevant_data(self, requests_mock):
         requests_mock.get.return_value = self.response_mock
 

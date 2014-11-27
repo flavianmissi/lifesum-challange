@@ -1,6 +1,6 @@
 import unittest
 import multiprocessing
-from challange.requests_pool import ActiveRequestsPool, worker
+from challenge.requests_pool import ActiveRequestsPool, worker
 import time
 
 

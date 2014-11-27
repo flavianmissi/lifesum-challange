@@ -1,6 +1,6 @@
-from challange import requests_pool
-from challange.processor import SimpleMapReduce, map_worker, reduce_worker
-from challange.semaphore import TimedSemaphore
+from challenge import requests_pool
+from challenge.processor import SimpleMapReduce, map_worker, reduce_worker
+from challenge.semaphore import TimedSemaphore
 from collections import Counter
 from tests.test_data import data, data1
 import multiprocessing
